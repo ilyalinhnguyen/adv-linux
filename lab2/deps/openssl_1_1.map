@@ -1,0 +1,8 @@
+OPENSSL_1_1_0 {
+    global:
+        MD5_Init;
+        MD5_Update;
+        MD5_Final;
+    local:
+        *;
+};
