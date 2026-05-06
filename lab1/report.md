@@ -22,7 +22,8 @@ architecture dependent)
 # Solution
 
 Here you can see the workflow of my program:
-Asciinema URL: https://asciinema.org/a/ZZNUagjfP3ARxUY0
+- Asciinema URL: https://asciinema.org/a/ZZNUagjfP3ARxUY0
+- GitHub URL: https://github.com/ilyalinhnguyen/adv-linux
 
 I implemented the task app in C (POSIX + direct ELF parsing). All tests I run in docker images with different arch.
 
