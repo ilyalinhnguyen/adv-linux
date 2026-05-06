@@ -381,5 +381,4 @@ printf "\n" | LD_LIBRARY_PATH=/home/user/Inno/adv-linux/lab2/deps \
 Output:
 
 ![alt](assets/Screenshot%20from%202026-05-06%2015-07-06.png)
-
 That's it for this task
