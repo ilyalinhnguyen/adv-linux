@@ -13,7 +13,7 @@ This repository contains **Advanced Linux** lab solutions.
   [![Report](https://img.shields.io/badge/report-md-informational)](./lab1/report.md)
   [![Report](https://img.shields.io/badge/report-pdf-informational)](./lab1/report.pdf)
 
-- **Lab 2**: `./lab2/`
+- **Lab 2 (GDB)**: `./lab2/`
 
   [![Language](https://img.shields.io/badge/language-Python-3776AB)](./lab2)
   [![Language](https://img.shields.io/badge/language-C-blue)](./lab2)
