@@ -26,92 +26,70 @@
 
 # Solution
 
+Here you can see the workflow of the lab and files (The `out/` dir will be in moodle, it is too large):
+- Asciinema URL: https://asciinema.org/a/tvQ3fEUTCdYWpkSN
+- GitHub URL: https://github.com/ilyalinhnguyen/adv-linux
+
 ## Setup development environment
 
-I used a Docker-based workflow so the lab is reproducible on any Linux machine with Docker installed.
+I used a Docker image for this lab because:
 
-### Files added for reproducibility
+- I want to isolate this lab from my system
+- It will be easy reproducable in other machines
 
-- `lab3/Dockerfile` - container with toolchain (`qemu-system-arm`, ARM cross-compiler, build tools).
-- `lab3/run_lab3.sh` - full automation script: clone sources, build U-Boot, Linux, BusyBox, create initramfs/rootfs, run QEMU.
-
-## Exact commands I ran on host
-
-### 1) Build the lab image
+I put in Docker image all needed packages so let's build it:
 
 ```bash
-cd /home/user/Inno/adv-linux/lab3
+cd lab3/
 docker build -t adv-linux-lab3 .
 ```
 
-Output (excerpt):
+![alt](assets/Screenshot%20from%202026-05-07%2016-06-59.png)
 
-```text
-#5 [2/3] RUN apt-get update && apt-get install -y --no-install-recommends ... qemu-system-arm ... gcc-arm-linux-gnueabihf ...
-#5 32.14 Setting up qemu-system-arm (1:8.2.2+ds-0ubuntu1.16) ...
-#5 32.17 Setting up gcc-arm-linux-gnueabihf (4:13.2.0-7ubuntu1) ...
-#7 naming to docker.io/library/adv-linux-lab3:latest done
-#7 DONE 26.4s
-```
-
-### 2) Run the full lab pipeline inside container
+And run it
 
 ```bash
-docker run --rm --privileged \
-  -v "/home/user/Inno/adv-linux/lab3:/work/lab3" \
-  adv-linux-lab3 \
-  bash -lc "cd /work/lab3 && ./run_lab3.sh"
+docker run --rm -it --privileged -v "/home/user/Inno/adv-linux/lab3:/work/lab3" adv-linux-lab3 bash
 ```
 
-Output (excerpt):
+We are inside our container. 
 
-```text
-[1/7] Cloning sources
-[2/7] Building U-Boot for vexpress-a9
-[3/7] Building Linux kernel for vexpress-a9
-[4/7] Building BusyBox (static) for initramfs/rootfs
-[5/7] Preparing initramfs (busybox + /init)
-[6/7] Preparing rootfs image (ext4 + busybox init)
-[7/7] Running QEMU with boot chain
-All done. Build artifacts are in /work/lab3/out
-```
-
-### 3) Verify generated artifacts
+Let's prepare folders and environment variables:
 
 ```bash
-ls -lh /home/user/Inno/adv-linux/lab3/out
+export ARCH=arm
+export CROSS_COMPILE=arm-linux-gnueabihf-
+export MAKEFLAGS="-j$(nproc)"
+
+mkdir -p /work/lab3/src /work/lab3/out
 ```
 
-Output:
-
-```text
-total 29M
-drwxr-xr-x  9 root root 4.0K ... initramfs
--rw-r--r--  1 root root 1.1M ... initramfs.cpio.gz
-drwxr-xr-x 12 root root 4.0K ... rootfs
--rw-r--r--  1 root root 128M ... rootfs.ext4
--rwxr-xr-x  1 root root 4.2M ... u-boot
--rw-r--r--  1 root root  14K ... vexpress-v2p-ca9.dtb
--rwxr-xr-x  1 root root 5.4M ... zImage
-```
-
-## Commands executed inside `run_lab3.sh`
-
-The script runs these key commands to satisfy both task parts:
+Perfect, now let`s clone the sources:
 
 ```bash
-# Sources
+cd src/
 git clone --depth 1 --branch v2022.01 https://github.com/u-boot/u-boot.git
 git clone --depth 1 --branch v6.6 https://github.com/torvalds/linux.git
 git clone --depth 1 --branch 1_36_1 https://github.com/mirror/busybox.git
+```
 
-# U-Boot
-export ARCH=arm
-export CROSS_COMPILE=arm-linux-gnueabihf-
+After a long time everything is cloned.
+
+Now let's build `U-boot`:
+
+```bash
+cd u-boot/
 make vexpress_ca9x4_defconfig
 make
+cp -f u-boot /work/lab3/out/u-boot
+```
 
-# Linux kernel
+![alt](assets/Screenshot%20from%202026-05-07%2016-08-19.png)
+
+Build Linux kernel:
+
+```bash
+cd /work/lab3/src/linux
 make vexpress_defconfig
 ./scripts/config --enable DEVTMPFS
 ./scripts/config --enable DEVTMPFS_MOUNT
@@ -122,60 +100,141 @@ make vexpress_defconfig
 ./scripts/config --enable VIRTIO_BLK
 make olddefconfig
 make zImage dtbs
+cp -f arch/arm/boot/zImage /work/lab3/out/zImage
+cp -f arch/arm/boot/dts/arm/vexpress-v2p-ca9.dtb /work/lab3/out/vexpress-v2p-ca9.dtb
+```
 
-# BusyBox
+![alt](assets/Screenshot%20from%202026-05-07%2016-11-55.png)
+
+And build busybox (I used `sed` for more comfortable editing):
+
+```bash
+cd /work/lab3/src/busybox
 make distclean
 make defconfig
+sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/' .config
+sed -i 's/# CONFIG_FEATURE_SH_STANDALONE is not set/CONFIG_FEATURE_SH_STANDALONE=y/' .config
+sed -i 's/# CONFIG_FEATURE_SH_NOFORK is not set/CONFIG_FEATURE_SH_NOFORK=y/' .config
+sed -i 's/^CONFIG_TC=.*/# CONFIG_TC is not set/' .config
 make oldconfig </dev/null
 make
-make CONFIG_PREFIX=/work/lab3/out/initramfs install
-make CONFIG_PREFIX=/work/lab3/out/rootfs install
+```
 
-# Initramfs and rootfs image
+![alt](assets/Screenshot%20from%202026-05-07%2016-12-47.png)
+
+
+Now let's create initramfs.
+
+```bash
+make CONFIG_PREFIX=/work/lab3/out/initramfs install
+mkdir -p /work/lab3/out/initramfs/{proc,sys,dev,newroot}
+```
+
+And write the following `init` script:
+
+```bash
+#!/bin/sh
+set -e
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+echo "[initramfs] early userspace started"
+echo "[initramfs] waiting for /dev/mmcblk0..."
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  [ -b /dev/mmcblk0 ] && break
+  sleep 1
+done
+mount -t ext4 /dev/mmcblk0 /newroot
+echo "[initramfs] switched to rootfs on /dev/mmcblk0"
+exec switch_root /newroot /sbin/init
+```
+
+Giving rights for run it:
+
+```bash
+chmod +x /work/lab3/out/initramfs/init
+```
+
+And package our `initramfs/` directory into a compressed initramfs image so the Linux kernel can unpack it at boot:
+
+```bash
 find . -print0 | cpio --null -ov --format=newc > /work/lab3/out/initramfs.cpio
 gzip -f /work/lab3/out/initramfs.cpio
+```
+
+![alt](assets/Screenshot%20from%202026-05-07%2016-20-07.png)
+
+Now let's create rootfs and ext4 image:
+
+```bash
+mkdir -p /work/lab3/out/rootfs
+make CONFIG_PREFIX=/work/lab3/out/rootfs install
+mkdir -p /work/lab3/out/rootfs/{proc,sys,dev,etc,root,tmp,mnt}
+```
+
+And write the following `init` script:
+
+```bash
+#!/bin/sh
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+echo "[rootfs] root filesystem is mounted"
+echo "[rootfs] boot flow: U-Boot -> Linux kernel -> initramfs -> rootfs"
+exec /bin/sh
+```
+
+Giving rights to it:
+
+```bash
+chmod +x /work/lab3/out/rootfs/sbin/init
+```
+
+Create a file that will be virtual SD card/disk with 128 MB:
+
+```bash
 truncate -s 128M /work/lab3/out/rootfs.ext4
+```
+
+Formats that file with an ext4 filesystem:
+
+```bash
 mkfs.ext4 -F /work/lab3/out/rootfs.ext4
-
-# Boot flow in QEMU
-qemu-system-arm -M vexpress-a9 -m 512M -nographic \
-  -kernel /work/lab3/out/u-boot \
-  -device loader,file=/work/lab3/out/zImage,addr=0x60010000 \
-  -device loader,file=/work/lab3/out/initramfs.cpio.gz,addr=0x63000000 \
-  -device loader,file=/work/lab3/out/vexpress-v2p-ca9.dtb,addr=0x62f00000 \
-  -drive file=/work/lab3/out/rootfs.ext4,if=sd,format=raw
 ```
 
-## Boot flow proof (required chain)
+Create mountpoint dir and mount the ext4 filesystem using a loop device, so the kernel treats the file like a disk partition:
 
-From QEMU serial log:
-
-```text
-U-Boot 2022.01 (May 07 2026 - ...)
-=> setenv bootargs console=ttyAMA0 root=/dev/mmcblk0 rw rdinit=/init
-=> bootz 0x60010000 0x63000000:0x106964 0x62f00000
-Linux version 6.6.0 (...)
-[initramfs] early userspace started
-[initramfs] waiting for /dev/mmcblk0...
-[initramfs] switched to rootfs on /dev/mmcblk0
-[rootfs] root filesystem is mounted
-[rootfs] boot flow: U-Boot -> Linux kernel -> initramfs -> rootfs
+```bash
+mkdir -p /tmp/rootfs-mnt
+mount -o loop /work/lab3/out/rootfs.ext4 /tmp/rootfs-mnt
 ```
 
-This confirms the required sequence:
+Copy my prepared rootfs directory tree into the mounted filesystem and unmount the image cleanly and remove the temporary mount directory:
 
-`bootloader (U-Boot) -> kernel -> initramfs -> rootfs`.
+```bash
+cp -a /work/lab3/out/rootfs/. /tmp/rootfs-mnt/
+umount /tmp/rootfs-mnt
+rmdir /tmp/rootfs-mnt
+```
 
-## Screenshot checklist (what to capture)
+So let's boot in QEMU now:
 
-1. `docker build -t adv-linux-lab3 .` output showing installed `qemu-system-arm` and `gcc-arm-linux-gnueabihf`.
-2. `docker run ... ./run_lab3.sh` output showing `[1/7]` ... `[7/7]`.
-3. QEMU boot section with:
-   - `U-Boot 2022.01`
-   - `Linux version 6.6.0`
-   - `[initramfs] ...`
-   - `[rootfs] boot flow: U-Boot -> Linux kernel -> initramfs -> rootfs`
-4. `ls -lh lab3/out` output with built artifacts (`u-boot`, `zImage`, `dtb`, `initramfs.cpio.gz`, `rootfs.ext4`).
+```bash
+INITRD_SIZE_HEX=$(printf "0x%x" "$(stat -c %s /work/lab3/out/initramfs.cpio.gz)")
+( sleep 3; \
+  echo "setenv bootargs console=ttyAMA0 root=/dev/mmcblk0 rw rdinit=/init"; \
+  echo "bootz 0x60010000 0x63000000:${INITRD_SIZE_HEX} 0x62f00000"; \
+) | timeout 120 qemu-system-arm \
+      -M vexpress-a9 \
+      -m 512M \
+      -nographic \
+      -kernel /work/lab3/out/u-boot \
+      -device loader,file=/work/lab3/out/zImage,addr=0x60010000 \
+      -device loader,file=/work/lab3/out/initramfs.cpio.gz,addr=0x63000000 \
+      -device loader,file=/work/lab3/out/vexpress-v2p-ca9.dtb,addr=0x62f00000 \
+      -drive file=/work/lab3/out/rootfs.ext4,if=sd,format=raw
+```
 
+![alt](assets/Screenshot%20from%202026-05-07%2016-43-07.png)
 
-
+That's it for the task, `out/` directory will be on moodle, beacuse its too large for github.
