@@ -20,3 +20,9 @@ This repository contains **Advanced Linux** lab solutions.
   [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](./lab2)
   [![Report](https://img.shields.io/badge/report-md-informational)](./lab2/report.md)
   [![Report](https://img.shields.io/badge/report-pdf-informational)](./lab2/report.pdf)
+
+- **Lab 3 (U-Boot, QEMU, boot flow)**: `./lab3/`
+
+  [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](./lab3)
+  [![Docker](https://img.shields.io/badge/docker-ready-2496ED)](./lab3/Dockerfile)
+  [![Report](https://img.shields.io/badge/report-md-informational)](./lab3/report.md)
