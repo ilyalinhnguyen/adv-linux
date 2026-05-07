@@ -235,6 +235,14 @@ INITRD_SIZE_HEX=$(printf "0x%x" "$(stat -c %s /work/lab3/out/initramfs.cpio.gz)"
       -drive file=/work/lab3/out/rootfs.ext4,if=sd,format=raw
 ```
 
+QEMU starts by executing the U-Boot binary as if it were the firmware/bootloader for the `vexpress-a9` machine.
+I use `-nographic` so all output goes to the terminal via the emulated serial (`ttyAMA0`).
+
+`-device loader` pre-loads `zImage`, `initramfs.cpio.gz`, and the `dtb` into RAM at the given addresses; then we “type” U-Boot commands:
+`setenv bootargs ... rdinit=/init` and `bootz KERNEL INITRD:SIZE DTB`.
+Rootfs is attached as `if=sd`, so Linux sees it as `/dev/mmcblk0` (mounted by initramfs, then `switch_root`).
+`timeout 120` just stops QEMU after 2 minutes.
+
 ![alt](assets/Screenshot%20from%202026-05-07%2016-43-07.png)
 
 That's it for the task, `out/` directory will be on moodle, beacuse its too large for github.
