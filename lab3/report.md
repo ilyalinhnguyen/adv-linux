@@ -245,4 +245,5 @@ Rootfs is attached as `if=sd`, so Linux sees it as `/dev/mmcblk0` (mounted by in
 
 ![alt](assets/Screenshot%20from%202026-05-07%2016-43-07.png)
 
-That's it for the task, `out/` directory will be on moodle, beacuse its too large for github.
+That's it for the task, `out/` directory can be accessed here: https://drive.google.com/drive/folders/1Z_OLO3qbcD9kafouvRshc6e7v6DiKYcN?usp=sharing
+
