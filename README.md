@@ -26,3 +26,12 @@ This repository contains **Advanced Linux** lab solutions.
   [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](./lab3)
   [![Docker](https://img.shields.io/badge/docker-ready-2496ED)](./lab3/Dockerfile)
   [![Report](https://img.shields.io/badge/report-md-informational)](./lab3/report.md)
+  [![Report](https://img.shields.io/badge/report-pdf-informational)](./lab3/report.pdf)
+
+- **Lab 4 (Kernel modules, chardev)**: `./lab4/`
+  
+  [![Language](https://img.shields.io/badge/language-C-blue)](./lab4)
+  [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](./lab4)
+  [![Report](https://img.shields.io/badge/report-md-informational)](./lab4/report.md)
+  [![Report](https://img.shields.io/badge/report-pdf-informational)](./lab4/report.pdf)
+  [![Build](https://img.shields.io/badge/build-make-brightgreen)](./lab4/Makefile)
