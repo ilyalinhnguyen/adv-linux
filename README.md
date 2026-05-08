@@ -35,3 +35,10 @@ This repository contains **Advanced Linux** lab solutions.
   [![Report](https://img.shields.io/badge/report-md-informational)](./lab4/report.md)
   [![Report](https://img.shields.io/badge/report-pdf-informational)](./lab4/report.pdf)
   [![Build](https://img.shields.io/badge/build-make-brightgreen)](./lab4/Makefile)
+
+- **Lab 5 (USB “electronic key” for chardev)**: `./lab5/`
+
+  [![Language](https://img.shields.io/badge/language-C-blue)](./lab5)
+  [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](./lab5)
+  [![Report](https://img.shields.io/badge/report-md-informational)](./lab5/report.md)
+  [![Build](https://img.shields.io/badge/build-make-brightgreen)](./lab5/Makefile)
